@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Core resources for apisq (https://github.com/apisq/bootstrap)
+
+Resources:
+
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID:
+                Ref: AssetsBucketKmsKey
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  AssetsBucketKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Example KMS key for encrypting application resources
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowRootAccountAdmin
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: AllowS3UseForSpecificBucketOnly
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:SourceAccount:
+                  Ref: AWS::AccountId
+              ArnEquals:
+                aws:SourceArn:
+                  Fn::Sub: arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+
+  AssetsBucketKmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName:
+        Fn::Sub: alias/${AWS::StackName}
+      TargetKeyId:
+        Ref: AssetsBucketKmsKey
+
+Outputs:
+  Version:
+    Description: Bootstrap version
+    Value: '1.0.0'
+  AssetsBucketName:
+    Description: Bucket Name
+    Value:
+      Ref: AssetsBucket
+  AssetsBucketArn:
+    Description: Bucket Arn
+    Value:
+      Fn::GetAtt: [AssetsBucket, Arn]
