@@ -1,13 +1,28 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Core resources for apisq (https://github.com/apisq/bootstrap)
 
+Parameters:
+  EphemeralId:
+    Type: String
+    Default: ''
+
+Conditions:
+  HasEphemeralId:
+    Fn::Not: [{ Fn::Equals: [{ Ref: EphemeralId }, ''] }]
+
 Resources:
 
   AssetsBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
-        Fn::Sub: ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+        Fn::Sub:
+          - apisq-assets-${AWS::Region}-${AWS::AccountId}${Suffix}
+          - Suffix:
+              Fn::If:
+                - HasEphemeralId
+                - Fn::Sub: -${EphemeralId}
+                - ''
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -23,7 +38,7 @@ Resources:
   AssetsBucketKmsKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: Example KMS key for encrypting application resources
+      Description: ${AWS::StackName} KMS key for Assets bucket
       EnableKeyRotation: true
       KeyPolicy:
         Version: '2012-10-17'
@@ -58,7 +73,13 @@ Resources:
     Type: AWS::KMS::Alias
     Properties:
       AliasName:
-        Fn::Sub: alias/${AWS::StackName}
+        Fn::Sub:
+          - alias/apisq-assets-${AWS::Region}-${AWS::AccountId}${Suffix}
+          - Suffix:
+              Fn::If:
+                - HasEphemeralId
+                - Fn::Sub: -${EphemeralId}
+                - ''
       TargetKeyId:
         Ref: AssetsBucketKmsKey
 
