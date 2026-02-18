@@ -206,6 +206,10 @@ Outputs:
     Description: Bucket ARN
     Value:
       Fn::GetAtt: [AssetsBucket, Arn]
+  DeployRoleName:
+    Description: Deploy Role Name
+    Value:
+      Ref: DeployRole
   DeployRoleArn:
     Description: Deploy Role ARN
     Value:
