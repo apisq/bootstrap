@@ -7,5 +7,6 @@ Core resources for apisq applications & services.
 ```sh
 $ aws cloudformation deploy \
   --stack-name apisq-bootstrap \
-  --template-file ./bootstrap.yml
+  --template-file ./bootstrap.yml \
+  --capabilities CAPABILITY_NAMED_IAM
 ```

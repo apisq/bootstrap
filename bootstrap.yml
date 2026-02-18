@@ -5,10 +5,20 @@ Parameters:
   EphemeralId:
     Type: String
     Default: ''
+  CustomDomainName:
+    Type: String
+    Default: ''
+  CustomDomainCertId:
+    Type: String
+    Default: ''
 
 Conditions:
   HasEphemeralId:
     Fn::Not: [{ Fn::Equals: [{ Ref: EphemeralId }, ''] }]
+  HasCustomDomain:
+    Fn::And:
+      - Fn::Not: [{ Fn::Equals: [{ Ref: CustomDomainName }, ''] }]
+      - Fn::Not: [{ Fn::Equals: [{ Ref: CustomDomainCertId }, ''] }]
 
 Resources:
 
@@ -67,7 +77,13 @@ Resources:
                   Ref: AWS::AccountId
               ArnEquals:
                 aws:SourceArn:
-                  Fn::Sub: arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+                  Fn::Sub:
+                    - arn:aws:s3:::apisq-assets-${AWS::Region}-${AWS::AccountId}${Suffix}
+                    - Suffix:
+                        Fn::If:
+                          - HasEphemeralId
+                          - Fn::Sub: -${EphemeralId}
+                          - ''
 
   AssetsBucketKmsAlias:
     Type: AWS::KMS::Alias
@@ -83,6 +99,101 @@ Resources:
       TargetKeyId:
         Ref: AssetsBucketKmsKey
 
+  CustomDomain:
+    Type: AWS::ApiGateway::DomainName
+    Condition: HasCustomDomain
+    Properties:
+      DomainName:
+        Ref:  CustomDomainName
+      EndpointConfiguration:
+        Types: [REGIONAL]
+      SecurityPolicy: TLS_1_2
+      RegionalCertificateArn:
+        Fn::Sub: arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CustomDomainCertId}
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub:
+          - apisq-deploy${Suffix}-role
+          - Suffix:
+              Fn::If:
+                - HasEphemeralId
+                - Fn::Sub: -${EphemeralId}
+                - ''
+      Description: Execution role assumed by CloudFormation to deploy apisq resources
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: DeployPolicy1
+        - Ref: DeployPolicy2
+
+  DeployPolicy1:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName:
+        Fn::Sub:
+          - apisq-deploy${Suffix}-policy-1
+          - Suffix:
+              Fn::If:
+                - HasEphemeralId
+                - Fn::Sub: -${EphemeralId}
+                - ''
+      Description: (Policy 1) Generic read permissions
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ec2:Describe*"
+            Resource: "*"
+
+  DeployPolicy2:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName:
+        Fn::Sub:
+          - apisq-deploy${Suffix}-policy-2
+          - Suffix:
+              Fn::If:
+                - HasEphemeralId
+                - Fn::Sub: -${EphemeralId}
+                - ''
+      Description: (Policy 2) Deploy resources permissions
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # Allow all Lambda actions
+          - Effect: Allow
+            Action: lambda:*
+            Resource:
+              Fn::Sub: 'arn:aws:lambda:*:${AWS::AccountId}:function:apisq-*'
+          # Except Invoke*
+          - Effect: Deny
+            Action: lambda:Invoke*
+            Resource: '*'
+
+          # Allow all DynamoDB actions
+          - Effect: Allow
+            Action: dynamodb:*
+            Resource:
+              - Fn::Sub: 'arn:aws:dynamodb:*:${AWS::AccountId}:table:apisq-*'
+              - Fn::Sub: 'arn:aws:dynamodb::${AWS::AccountId}:global-table:apisq-*'
+          # Except *Item actions
+          - Effect: Deny
+            Action: dynamodb:*Item
+            Resource: '*'
+
+          - Effect: Allow
+            Action: apigateway:*
+            Resource: '*'
+
 Outputs:
   Version:
     Description: Bootstrap version
@@ -92,6 +203,20 @@ Outputs:
     Value:
       Ref: AssetsBucket
   AssetsBucketArn:
-    Description: Bucket Arn
+    Description: Bucket ARN
     Value:
       Fn::GetAtt: [AssetsBucket, Arn]
+  DeployRoleArn:
+    Description: Deploy Role ARN
+    Value:
+      Fn::GetAtt: [DeployRole, Arn]
+  CustomDomainName:
+    Description: Custom Domain Name
+    Condition: HasCustomDomain
+    Value:
+      Ref: CustomDomain
+  CustomDomainArn:
+    Description: Custom Domain ARN
+    Condition: HasCustomDomain
+    Value:
+      Fn::GetAtt: [CustomDomain, DomainNameArn]
