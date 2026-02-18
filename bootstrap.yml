@@ -21,6 +21,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
+        # apisq-bootstrap-us-east-1-112233445566
         Fn::Sub: ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -72,6 +73,7 @@ Resources:
     Type: AWS::KMS::Alias
     Properties:
       AliasName:
+        # alias/apisq-bootstrap-us-east-1-112233445566
         Fn::Sub: alias/${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
       TargetKeyId:
         Ref: AssetsBucketKmsKey
@@ -92,7 +94,8 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName:
-        Fn::Sub: ${AWS::StackName}-deploy-role
+        # apisq-bootstrap-deploy-role
+        Fn::Sub: deploy-role
       Description: Execution role assumed by CloudFormation to deploy apisq resources
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -109,6 +112,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName:
+        # apisq-bootstrap-deploy-policy-1
         Fn::Sub: ${AWS::StackName}-deploy-policy-1
       Description: (Policy 1) Generic read permissions
       PolicyDocument:
@@ -127,6 +131,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName:
+        # apisq-bootstrap-deploy-policy-2
         Fn::Sub: ${AWS::StackName}-deploy-policy-2
       Description: (Policy 2) Deploy resources permissions
       PolicyDocument:
@@ -206,6 +211,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName:
+        # apisq-bootstrap-deploy-policy-3
         Fn::Sub: ${AWS::StackName}-deploy-policy-3
       Description: (Policy 3) Deploy resources permissions
       PolicyDocument:
@@ -233,6 +239,7 @@ Resources:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName:
+        # apisq-bootstrap-permissions-policy
         Fn::Sub: ${AWS::StackName}-permissions-policy
       Description: (Policy 3) Deploy resources permissions
       PolicyDocument:
@@ -343,41 +350,52 @@ Outputs:
     Value: '1.0.0'
     Export:
       Name:
+        # apisq-bootstrap-version
         Fn::Sub: ${AWS::StackName}-version
   AssetsBucketName:
     Description: Bucket Name
     Value:
+      # apisq-bootstrap-us-east-1-112233445566
       Ref: AssetsBucket
     Export:
       Name:
+        # apisq-bootstrap-assets-bucket
         Fn::Sub: ${AWS::StackName}-assets-bucket
   AssetsBucketArn:
     Description: Bucket ARN
     Value:
+      # arn:aws:s3:::apisq-bootstrap-us-east-1-112233445566
       Fn::GetAtt: [AssetsBucket, Arn]
     Export:
       Name:
+        # apisq-bootstrap-assets-bucket-arn
         Fn::Sub: ${AWS::StackName}-assets-bucket-arn
   DeployRoleName:
     Description: Deploy Role Name
     Value:
+      # apisq-bootstrap-deploy-role
       Ref: DeployRole
     Export:
       Name:
+        # apisq-bootstrap-deploy-role
         Fn::Sub: ${AWS::StackName}-deploy-role
   DeployRoleArn:
     Description: Deploy Role ARN
     Value:
+      # arn:aws:iam:112233445566::role/apisq-bootstrap-deploy-role
       Fn::GetAtt: [DeployRole, Arn]
     Export:
       Name:
+        # apisq-bootstrap-deploy-role-arn
         Fn::Sub: ${AWS::StackName}-deploy-role-arn
   ExecutionPermissionsBoundary:
     Description: Execution Role Permission Boundary
     Value:
+      # apisq-bootstrap-permissions-policy
       Fn::Sub: ${AWS::StackName}-permissions-policy
     Export:
       Name:
+        # apisq-bootstrap-execution-permission-boundary
         Fn::Sub: ${AWS::StackName}-execution-permission-boundary
   CustomDomainName:
     Description: Custom Domain Name
@@ -386,6 +404,7 @@ Outputs:
       Ref: CustomDomain
     Export:
       Name:
+        # apisq-bootstrap-custom-domain
         Fn::Sub: ${AWS::StackName}-custom-domain
   CustomDomainArn:
     Description: Custom Domain ARN
@@ -394,4 +413,5 @@ Outputs:
       Fn::GetAtt: [CustomDomain, DomainNameArn]
     Export:
       Name:
+        # apisq-bootstrap-custom-domain-arn
         Fn::Sub: ${AWS::StackName}-custom-domain-arn
