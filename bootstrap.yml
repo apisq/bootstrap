@@ -34,11 +34,17 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: apisq-bootstrap-assets-bucket
+        - Key: Source
+          Value: apisq/bootstrap
 
   AssetsBucketKmsKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: ${AWS::StackName} KMS key for Assets bucket
+      Description:
+        Fn::Sub: ${AWS::StackName} KMS key for Assets bucket
       EnableKeyRotation: true
       KeyPolicy:
         Version: '2012-10-17'
@@ -68,13 +74,17 @@ Resources:
               ArnEquals:
                 aws:SourceArn:
                   Fn::Sub: arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+      Tags:
+        - Key: Name
+          Value: apisq-bootstrap-assets-bucket-kms-key
+        - Key: Source
+          Value: apisq/bootstrap
 
   AssetsBucketKmsAlias:
     Type: AWS::KMS::Alias
     Properties:
       AliasName:
-        # alias/apisq-bootstrap-us-east-1-112233445566
-        Fn::Sub: alias/${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+        Fn::Sub: alias/${AWS::StackName}
       TargetKeyId:
         Ref: AssetsBucketKmsKey
 
@@ -89,6 +99,11 @@ Resources:
       SecurityPolicy: TLS_1_2
       RegionalCertificateArn:
         Fn::Sub: arn:aws:acm:${AWS::Region}:${AWS::AccountId}:certificate/${CustomDomainCertId}
+      Tags:
+        - Key: Name
+          Value: apisq-bootstrap-api-gateway-custom-domain
+        - Key: Source
+          Value: apisq/bootstrap
 
   DeployRole:
     Type: AWS::IAM::Role
@@ -108,6 +123,11 @@ Resources:
         - Ref: DeployPolicy1
         - Ref: DeployPolicy2
         - Ref: DeployPolicy3
+      Tags:
+        - Key: Name
+          Value: apisq-bootstrap-deploy-role
+        - Key: Source
+          Value: apisq/bootstrap
 
   DeployPolicy1:
     Type: AWS::IAM::ManagedPolicy
