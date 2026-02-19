@@ -374,7 +374,7 @@ Resources:
 Outputs:
   Version:
     Description: Bootstrap version
-    Value: '1.0.0'
+    Value: '0.1.0'
     Export:
       Name:
         # apisq-bootstrap-version
