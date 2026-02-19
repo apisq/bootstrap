@@ -153,6 +153,17 @@ Resources:
             Action: events:PutEvents
             Resource: '*'
 
+          # Allow S3 permissions
+          - Effect: Allow
+            Action: s3:*
+            Resource:
+              Fn::Sub: arn:aws:s3:::apisq-data-${AWS::Region}-${AWS::AccountId}-*
+          # Except *Object actions
+          - Effect: Deny
+            Action: s3:*Object*
+            Resource:
+              Fn::Sub: arn:aws:s3:::apisq-data-${AWS::Region}-${AWS::AccountId}-*
+
           # Allow the IAM CreateRole action only if the permission boundary is set
           - Effect: Allow
             Action:
