@@ -164,6 +164,49 @@ Resources:
             Resource:
               Fn::Sub: arn:aws:s3:::apisq-data-${AWS::Region}-${AWS::AccountId}-*
 
+          # Allow KMS permissions
+          - Effect: Allow
+            Action: kms:ListAliases
+            Resource: '*'
+          - Effect: Allow
+            Action: kms:CreateKey
+            Resource:
+              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+            Condition:
+              StringLike:
+                aws:RequestTag/Source: apisq/*
+          - Effect: Allow
+            Action:
+              - kms:DescribeKey
+              - kms:CreateAlias
+              - kms:CreateGrant
+              - kms:DeleteAlias
+              - kms:EnableKeyRotation
+              - kms:GetKey*
+              - kms:ListResourceTags
+              - kms:PutKeyPolicy
+              - kms:RetireGrant
+              - kms:ScheduleKeyDeletion
+              - kms:UpdateKeyDescription
+              - kms:TagResource
+              - kms:UntagResource
+            Resource:
+              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+            Condition:
+              StringLike:
+                aws:ResourceTag/Source: apisq/*
+          - Effect: Allow
+            Action:
+              - kms:DescribeKey
+              - kms:CreateAlias
+              - kms:CreateGrant
+              - kms:DeleteAlias
+              - kms:RetireGrant
+              - kms:TagResource
+              - kms:UntagResource
+            Resource:
+              Fn::Sub: arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/apisq-*
+
           # Allow the IAM CreateRole action only if the permission boundary is set
           - Effect: Allow
             Action:
@@ -216,6 +259,30 @@ Resources:
             Action: states:*
             Resource:
               Fn::Sub: arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:apisq-*
+
+          # Allow all SQS actions
+          - Effect: Allow
+            Action: sqs:*
+            Resource:
+              Fn::Sub: arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:apisq-*
+          # Except the one that sends/receives data from the queue
+          - Effect: Deny
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:SendMessage
+            Resource:
+              Fn::Sub: arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:apisq-*
+
+          # Allow all SNS actions
+          - Effect: Allow
+            Action: sns:*
+            Resource:
+              Fn::Sub: arn:aws:sns:${AWS::Region}:${AWS::AccountId}:apisq-*
+          # Except the one that sends messages to topics
+          - Effect: Deny
+            Action: sns:Publish
+            Resource:
+              Fn::Sub: arn:aws:sns:${AWS::Region}:${AWS::AccountId}:apisq-*
 
   PermssionBoundaryPolicy:
     Type: AWS::IAM::ManagedPolicy
