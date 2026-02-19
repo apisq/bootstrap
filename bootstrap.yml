@@ -72,7 +72,6 @@ Resources:
       ManagedPolicyArns:
         - Ref: DeployPolicy1
         - Ref: DeployPolicy2
-        - Ref: DeployPolicy3
       Tags:
         - Key: Name
           Value: apisq-bootstrap-deploy-role
@@ -85,34 +84,22 @@ Resources:
       ManagedPolicyName:
         # apisq-bootstrap-us-east-1-deploy-policy-1
         Fn::Sub: ${AWS::StackName}-${AWS::Region}-deploy-policy-1
-      Description: (Policy 1) Generic read permissions
+      Description: (Policy 1) apisq deploy resources permissions
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
+          # Generic read
           - Effect: Allow
             Action:
-              - "ec2:Describe*"
-            Resource: "*"
-          - Effect: Allow
-            Action: logs:DescribeLogGroups
-            Resource:
-              Fn::Sub:  "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:"
+              - ec2:Describe*
+              - kms:ListAliases
+            Resource: '*'
 
-  DeployPolicy2:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      ManagedPolicyName:
-        # apisq-bootstrap-us-east-1-deploy-policy-2
-        Fn::Sub: ${AWS::StackName}-${AWS::Region}-deploy-policy-2
-      Description: (Policy 2) Deploy resources permissions
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
           # Allow all Lambda actions
           - Effect: Allow
             Action: lambda:*
             Resource:
-              Fn::Sub: 'arn:aws:lambda:*:${AWS::AccountId}:function:apisq-*'
+              Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:apisq-*
           # Except Invoke*
           - Effect: Deny
             Action: lambda:Invoke*
@@ -122,7 +109,7 @@ Resources:
           - Effect: Allow
             Action: dynamodb:*
             Resource:
-              - Fn::Sub: 'arn:aws:dynamodb:*:${AWS::AccountId}:table:apisq-*'
+              - Fn::Sub: 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table:apisq-*'
               - Fn::Sub: 'arn:aws:dynamodb::${AWS::AccountId}:global-table:apisq-*'
           # Except *Item actions
           - Effect: Deny
@@ -132,9 +119,14 @@ Resources:
           # Allow API-Gateway permissions
           - Effect: Allow
             Action: apigateway:*
-            Resource: '*'
+            Resource:
+              Fn::Sub: arn:aws:apigateway:${AWS::Region}::*
 
           # Allow Cloudwatch Logs permissions
+          - Effect: Allow
+            Action: logs:DescribeLogGroups
+            Resource:
+              Fn::Sub:  "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:"
           - Effect: Allow
             Action: logs:*
             Resource:
@@ -165,9 +157,6 @@ Resources:
               Fn::Sub: arn:aws:s3:::apisq-data-${AWS::Region}-${AWS::AccountId}-*
 
           # Allow KMS permissions
-          - Effect: Allow
-            Action: kms:ListAliases
-            Resource: '*'
           - Effect: Allow
             Action: kms:CreateKey
             Resource:
@@ -232,12 +221,12 @@ Resources:
             Resource:
               - Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/apisq-execution-*-role
 
-  DeployPolicy3:
+  DeployPolicy2:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       ManagedPolicyName:
-        # apisq-bootstrap-us-east-1-deploy-policy-3
-        Fn::Sub: ${AWS::StackName}-${AWS::Region}-deploy-policy-3
+        # apisq-bootstrap-us-east-1-deploy-policy-2
+        Fn::Sub: ${AWS::StackName}-${AWS::Region}-deploy-policy-2
       Description: (Policy 3) Deploy resources permissions
       PolicyDocument:
         Version: "2012-10-17"
@@ -295,103 +284,92 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
+            Action: lambda:*Invoke*
+            Resource:
+              Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:apisq-*
+
+          - Effect: Allow
             Action:
-
-              # API-Gateway
-              - apigateway:GET
-              - execute-api:Invoke
-
-              # Cloudwatch Logs
-              - logs:DescribeLogGroups
-              - logs:DescribeLogStreams
-              - logs:FilterLogEvents
-              - logs:GetLogEvents
-              - logs:GetQueryResults
-              - logs:StartQuery
-
-              # DynamoDB
               - dynamodb:BatchGetItem
               - dynamodb:BatchWriteItem
               - dynamodb:GetItem
               - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
               - dynamodb:Query
               - dynamodb:Scan
-              - dynamodb:UpdateItem
+            Resource:
+              - Fn::Sub: arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table:apisq-*
+              - Fn::Sub: arn:aws:dynamodb::${AWS::AccountId}:global-table:apisq-*
 
-              # EventBridge
-              - events:ListEventBuses
-              - events:ListRules
-              - events:PutEvents
+          - Effect: Allow
+            Action: execute-api:Invoke
+            Resource:
+              Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*
 
-              # KMS
-              - kms:DescribeKey
-              - kms:Decrypt
-              - kms:Encrypt
-              - kms:GenerateDataKey*
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*apisq-*'
+              - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*apisq-*:log-stream:'
+              - Fn::Sub: 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*apisq-*:log-stream:*'
 
-              # Lambda
-              - lambda:InvokeFunction
-              - lambda:InvokeFunctionUrl
+          - Effect: Allow
+            Action: events:PutEvents
+            Resource:
+              Fn::Sub: arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/*
 
-              # Parameter Store
+          - Effect: Allow
+            Action:
               - ssm:GetParameter
               - ssm:GetParameters
               - ssm:GetParametersByPath
               - ssm:DescribeParameters
+            Resource:
+              Fn::Sub: arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/apisq/*
 
-              # RDS
-              - rds-data:BatchExecuteStatement
-              - rds-data:BeginTransaction
-              - rds-data:CommitTransaction
-              - rds-data:ExecuteStatement
-              - rds-data:ListDatabases
-              - rds-data:ListSchemas
-              - rds-data:ListTables
-              - rds-data:RollbackTransaction
-              - rds:DescribeDBClusters
-              - rds:DescribeDBInstances
-
-              # S3
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource:
+              Fn::Sub: arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}/*
+          - Effect: Allow
+            Action:
               - s3:DeleteObject
               - s3:GetObject
               - s3:ListBucket
               - s3:PutObject
+            Resource:
+              Fn::Sub: arn:aws:s3:::apisq-data-${AWS::Region}-${AWS::AccountId}-*
 
-              # Secrets Manager
+          - Effect: Allow
+            Action:
               - secretsmanager:DescribeSecret
               - secretsmanager:GetResourcePolicy
               - secretsmanager:GetSecretValue
               - secretsmanager:ListSecrets
+            Resource:
+              Fn::Sub: arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:apisq-*
 
-              # SNS
-              - sns:GetSubscriptionAttributes
-              - sns:GetTopicAttributes
-              - sns:ListSubscriptionsByTopic
-              - sns:ListTopics
+          - Effect: Allow
+            Action:
               - sns:Publish
               - sns:Subscribe
               - sns:Unsubscribe
+            Resource:
+              Fn::Sub: arn:aws:sns:${AWS::Region}:${AWS::AccountId}:apisq-*
 
-              # SQS
-              - sqs:ChangeMessageVisibility
-              - sqs:DeleteMessage
-              - sqs:GetQueueAttributes
-              - sqs:GetQueueUrl
-              - sqs:ListQueues
-              - sqs:ListQueueTags
-              - sqs:PurgeQueue
-              - sqs:ReceiveMessage
-              - sqs:SendMessage
+          - Effect: Allow
+            Action: sqs:SendMessage
+            Resource:
+              Fn::Sub: arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:apisq-*
 
-              # Step Functions
-              - states:DescribeExecution
-              - states:DescribeStateMachine
-              - states:GetExecutionHistory
-              - states:ListExecutions
-              - states:ListStateMachines
-              - states:StartExecution
-
-            Resource: '*'
+          - Effect: Allow
+            Action: states:StartExecution
+            Resource:
+              Fn::Sub: arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:apisq-*
 
 Outputs:
   Version:
