@@ -13,7 +13,6 @@ Core resources for apisq applications & services.
 | Resource | Example | Description |
 | ---- | ---- | ---- |
 | `AssetsBucket` | `apisq-bootstrap-us-east-1-112233445566` | Bucket for code & other static resources to be stored & rendered from |
-| `AssetsBucketKmsKey` | — | Customer-managed KMS key to encrypt the Assets bucket contents |
 | `DeployRole` | `apisq-bootstrap-us-east-1-deploy-role` | Deployment role for Cloudformation to assume |
 | `DeployPolicy1` | `apisq-bootstrap-us-east-1-deploy-policy-1` | Deployment policy for Cloudformation |
 | `DeployPolicy2` | `apisq-bootstrap-us-east-1-deploy-policy-2` | Deployment policy for Cloudformation |

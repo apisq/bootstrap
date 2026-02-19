@@ -26,9 +26,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              SSEAlgorithm: aws:kms
-              KMSMasterKeyID:
-                Ref: AssetsBucketKmsKey
+              SSEAlgorithm: AES256
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -39,54 +37,6 @@ Resources:
           Value: apisq-bootstrap-assets-bucket
         - Key: Source
           Value: apisq/bootstrap
-
-  AssetsBucketKmsKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description:
-        Fn::Sub: ${AWS::StackName} KMS key for Assets bucket
-      EnableKeyRotation: true
-      KeyPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowRootAccountAdmin
-            Effect: Allow
-            Principal:
-              AWS:
-                Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
-            Action: kms:*
-            Resource: '*'
-          - Sid: AllowS3UseForSpecificBucketOnly
-            Effect: Allow
-            Principal:
-              Service: s3.amazonaws.com
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: '*'
-            Condition:
-              StringEquals:
-                aws:SourceAccount:
-                  Ref: AWS::AccountId
-              ArnEquals:
-                aws:SourceArn:
-                  Fn::Sub: arn:aws:s3:::${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
-      Tags:
-        - Key: Name
-          Value: apisq-bootstrap-assets-bucket-kms-key
-        - Key: Source
-          Value: apisq/bootstrap
-
-  AssetsBucketKmsAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName:
-        Fn::Sub: alias/${AWS::StackName}
-      TargetKeyId:
-        Ref: AssetsBucketKmsKey
 
   CustomDomain:
     Type: AWS::ApiGateway::DomainName
