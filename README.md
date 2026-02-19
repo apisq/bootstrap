@@ -14,9 +14,7 @@ Core resources for apisq applications & services.
 | ---- | ---- | ---- |
 | `AssetsBucket` | `apisq-bootstrap-us-east-1-112233445566` | Bucket for code & other static resources to be stored & rendered from |
 | `DeployRole` | `apisq-bootstrap-us-east-1-deploy-role` | Deployment role for Cloudformation to assume |
-| `DeployPolicy1` | `apisq-bootstrap-us-east-1-deploy-policy-1` | Deployment policy for Cloudformation |
-| `DeployPolicy2` | `apisq-bootstrap-us-east-1-deploy-policy-2` | Deployment policy for Cloudformation |
-| `DeployPolicy3` | `apisq-bootstrap-us-east-1-deploy-policy-3` | Deployment policy for Cloudformation |
+| `DeployPolicy{N}` | `apisq-bootstrap-us-east-1-deploy-policy-{N}` | Deployment policies for Cloudformation |
 | `PermssionBoundaryPolicy` | `apisq-bootstrap-us-east-1-execution-permissions-boundary` | Execution permission boundary policy to limit what execution roles can do |
 | `CustomDomain` | — | Optionally, include a Custom Domain resource to attach API-Gateways to |
 
