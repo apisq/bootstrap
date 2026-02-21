@@ -37,6 +37,7 @@ Resources:
           Value: apisq-bootstrap-assets-bucket
         - Key: Source
           Value: apisq/bootstrap
+    DeletionPolicy: Retain
 
   CustomDomain:
     Type: AWS::ApiGateway::DomainName
@@ -418,8 +419,8 @@ Outputs:
   ExecutionPermissionsBoundary:
     Description: Execution Role Permission Boundary
     Value:
-      # apisq-bootstrap-permissions-policy
-      Fn::Sub: ${AWS::StackName}-permissions-policy
+      # apisq-bootstrap-us-east-1-permissions-policy
+      Ref: PermssionBoundaryPolicy
     Export:
       Name:
         # apisq-bootstrap-execution-permission-boundary
